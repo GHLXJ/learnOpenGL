@@ -116,7 +116,7 @@ int main() {
 #pragma region Init three kinds light
 	//平行光
 	LightDir lightDir = LightDir(glm::vec3(10.0f,10.0f,5.0f),
-		glm::vec3(0, 0, 0),
+		glm::vec3(glm::radians(45.0f), glm::radians(180.0f), 0),
 		glm::vec3(1.0f,1.0f,1.0f)
 		);
 	//点光源
@@ -125,7 +125,7 @@ int main() {
 		glm::vec3(1.0f, 1.0f, 1.0f)
 	);
 	//聚光灯
-	LightSpot lightSpot = LightSpot(glm::vec3(0, 2.0f, -4.0f),
+	LightSpot lightSpot = LightSpot(glm::vec3(0, 1.0f, -0.5f),
 		glm::vec3(glm::radians(90.0f), 0, 0),
 		glm::vec3(1.0f, 1.0f, 1.0f)
 	);
@@ -136,12 +136,6 @@ int main() {
 #pragma endregion
 	#pragma region Init Material
 	Material* material = new Material(myShader,
-		glm::vec3(1.0f,1.0f,1.0f),
-		glm::vec3(1.0f, 1.0f, 1.0f),
-		glm::vec3(1.0f, 1.0f, 1.0f),
-		32.0f
-		);
-	Material* material2 = new Material(myShader,
 		glm::vec3(1.0f, 1.0f, 1.0f),
 		LoadImageToGPU("container2.png",GL_RGBA,GL_RGBA,Shader::Diffuse),
 		LoadImageToGPU("container2_specular.png", GL_RGBA, GL_RGBA, Shader::Specular), 
@@ -171,8 +165,7 @@ int main() {
 	//导入图片前翻转Y轴
 	stbi_set_flip_vertically_on_load(true);
 	#pragma region Load Image to GPU
-	/*unsigned int TexBufferA = LoadImageToGPU("container.jpg", GL_RGB, GL_RGB,0);*/
-	/*unsigned int TexBufferB = LoadImageToGPU("awesomeface.png", GL_RGB, GL_RGB, 3);*/
+
 #pragma endregion
 	#pragma region Prepare MVP matrices
 	//模型矩阵，观察矩阵，投影矩阵
@@ -201,49 +194,38 @@ int main() {
 			//Set Material -> Shader Program
 			myShader->use();
 			//再次指定GL_TEXTURE_2D内索引并绑定GL_TEXTURE_2D:Set Material -> Textures
-			glActiveTexture(GL_TEXTURE0);
-			/*glBindTexture(GL_TEXTURE_2D, TexBufferA);*/
-			glBindTexture(GL_TEXTURE_2D, material2->diffuse_tex);
-			glActiveTexture(GL_TEXTURE0 + 1);
-			glBindTexture(GL_TEXTURE_2D, material2->specular_tex);
+			glActiveTexture(GL_TEXTURE0 + Shader::Diffuse);
+			glBindTexture(GL_TEXTURE_2D, material->diffuse_tex);
+			glActiveTexture(GL_TEXTURE0 + Shader::Specular);
+			glBindTexture(GL_TEXTURE_2D, material->specular_tex);
 			//set lightColor objColor
 			glUniform3f(glGetUniformLocation(myShader->ID,"objColor"),1.0f,1.0f,1.0f);
-			glUniform3f(glGetUniformLocation(myShader->ID, "ambientColor"), 0.1f, 0.1f, 0.1f);
+			//环境光
+			glUniform3f(glGetUniformLocation(myShader->ID, "ambientColor"), 0.2f, 0.2f, 0.2f);
 			//Set Material -> Uniforms
-			//两个glUniform1i最后参数0和3与pragma region Load Image to GPU有关
-			glUniform1i(glGetUniformLocation(myShader->ID, "ourTextureA"), 0);
-			glUniform1i(glGetUniformLocation(myShader->ID, "ourTextureB"), 1);
 			glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "modelMat"), 1, GL_FALSE, glm::value_ptr(modelMat));
 			glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "viewMat"), 1, GL_FALSE, glm::value_ptr(viewMat));
 			glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "proMat"), 1, GL_FALSE, glm::value_ptr(proMat));
-			//glUniform3f(glGetUniformLocation(myShader->ID, "lightColor"), 1.0f, 1.0f, 1.0f);
-			//glUniform3f(glGetUniformLocation(myShader->ID, "lightPos"), 10.0f, 10.0f, 10.0f);
-			//不同光切换lightColor，lightPos
-			//lightDir
-			/*glUniform3f(glGetUniformLocation(myShader->ID, "lightColor"), lightDir.color.x, lightDir.color.y, lightDir.color.z);
-			glUniform3f(glGetUniformLocation(myShader->ID, "lightPos"), lightDir.position.x, lightDir.position.y, lightDir.position.z);
-			glUniform3f(glGetUniformLocation(myShader->ID, "lightDirection"), lightDir.lightDirection.x,lightDir.lightDirection.y, lightDir.lightDirection.z);*/
-			//lightPoint
-			/*glUniform3f(glGetUniformLocation(myShader->ID, "lightColor"), lightPoint.color.x, lightPoint.color.y, lightPoint.color.z);
-			glUniform3f(glGetUniformLocation(myShader->ID, "lightPos"), lightPoint.position.x, lightPoint.position.y, lightPoint.position.z);
-			glUniform3f(glGetUniformLocation(myShader->ID, "lightDirection"), lightPoint.lightDirection.x, lightPoint.lightDirection.y, lightPoint.lightDirection.z);
+			glUniform3f(glGetUniformLocation(myShader->ID, "eyes"), camera.Position.x, camera.Position.y, camera.Position.z);
+			//平行光
+			glUniform3f(glGetUniformLocation(myShader->ID,"lightDir.dirToLight"), lightDir.lightDirection.x, lightDir.lightDirection.y, lightDir.lightDirection.z);
+			glUniform3f(glGetUniformLocation(myShader->ID, "lightDir.color"), lightDir.color.x, lightDir.color.y, lightDir.color.z);
+			//点光源
+			glUniform3f(glGetUniformLocation(myShader->ID, "lightPoint.position"), lightPoint.position.x, lightPoint.position.y, lightPoint.position.z);
+			glUniform3f(glGetUniformLocation(myShader->ID, "lightPoint.color"), lightPoint.color.x, lightPoint.color.y, lightPoint.color.z);
 			glUniform1f(glGetUniformLocation(myShader->ID, "lightPoint.constant"), lightPoint.constant);
 			glUniform1f(glGetUniformLocation(myShader->ID, "lightPoint.linear"), lightPoint.linear);
-			glUniform1f(glGetUniformLocation(myShader->ID, "lightPoint.quadratic"), lightPoint.quadratic);*/
-			//lightSpot
-			glUniform3f(glGetUniformLocation(myShader->ID, "lightColor"), lightSpot.color.x, lightSpot.color.y, lightSpot.color.z);
-			glUniform3f(glGetUniformLocation(myShader->ID, "lightPos"), lightSpot.position.x, lightSpot.position.y, lightSpot.position.z);
-			glUniform3f(glGetUniformLocation(myShader->ID, "lightDirection"), lightSpot.lightDirection.x, lightSpot.lightDirection.y, lightSpot.lightDirection.z);
-			glUniform1f(glGetUniformLocation(myShader->ID, "lightSpot.cosPhyInner"),lightSpot.cosPhyInner );
-			glUniform1f(glGetUniformLocation(myShader->ID, "lightSpot.cosPhyOuter"),lightSpot.cosPhyOuter );
-			//
-			glUniform3f(glGetUniformLocation(myShader->ID, "eyes"), camera.Position.x, camera.Position.y, camera.Position.z);
-			material->setUniform3f("material.diffuse", material->diffuse);
-			material->setUniform3f("material.ambient",material2->ambient);
-			// 0 定值可封装
+			glUniform1f(glGetUniformLocation(myShader->ID, "lightPoint.quadratic"), lightPoint.quadratic);
+			//聚光灯
+			glUniform3f(glGetUniformLocation(myShader->ID, "lightSpot.position"), lightSpot.position.x, lightSpot.position.y, lightSpot.position.z);
+			glUniform3f(glGetUniformLocation(myShader->ID, "lightSpot.dirToLight"), lightSpot.lightDirection.x, lightSpot.lightDirection.y, lightSpot.lightDirection.z);
+			glUniform3f(glGetUniformLocation(myShader->ID, "lightSpot.color"), lightSpot.color.x, lightSpot.color.y, lightSpot.color.z);
+			glUniform1f(glGetUniformLocation(myShader->ID, "lightSpot.cosPhyInner"), lightSpot.cosPhyInner);
+			glUniform1f(glGetUniformLocation(myShader->ID, "lightSpot.cosPhyOuter"), lightSpot.cosPhyOuter);
+			//set material Uniform
 			material->setUniform1i("material.diffuse_tex", Shader::Diffuse);
 			material->setUniform1i("material.specular_tex", Shader::Specular);
-			material->setUniform1f("material.shininess",material2->shininess);
+			material->setUniform1f("material.shininess",material->shininess);
 			//绑定VAO,EBO之前绑定在此VAO上，可以不用再绑定:Set Model
 			glBindVertexArray(VAO);
 			//Draw Call

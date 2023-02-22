@@ -3,8 +3,8 @@
 LightSpot::LightSpot(glm::vec3 _position, glm::vec3 _rotation, glm::vec3 _color):
 	Light_base(_position, _rotation, _color)
 {
-	cosPhyInner = 0.9f;
-	cosPhyOuter = 0.85f;
+	cosPhyInner = 0.8f;
+	cosPhyOuter = 0.7f;
 	updateLightDir();
 }
 void LightSpot::updateLightDir()
