@@ -115,17 +115,17 @@ int main() {
 #pragma endregion
 #pragma region Init three kinds light
 	//平行光
-	LightDir lightDir = LightDir(glm::vec3(10.0f,10.0f,5.0f),
+	LightDir lightDir(glm::vec3(10.0f,10.0f,5.0f),
 		glm::vec3(glm::radians(45.0f), glm::radians(180.0f), 0),
 		glm::vec3(1.0f,1.0f,1.0f)
 		);
 	//点光源
-	LightPoint lightPoint = LightPoint(glm::vec3(1.0f, 2.0f, 0),
+	LightPoint lightPoint(glm::vec3(1.0f, 2.0f, 0),
 		glm::vec3(glm::radians(45.0f), 0, 0),
 		glm::vec3(1.0f, 1.0f, 1.0f)
 	);
 	//聚光灯
-	LightSpot lightSpot = LightSpot(glm::vec3(0, 1.0f, -0.5f),
+	LightSpot lightSpot(glm::vec3(0, 1.0f, -0.5f),
 		glm::vec3(glm::radians(90.0f), 0, 0),
 		glm::vec3(1.0f, 1.0f, 1.0f)
 	);
