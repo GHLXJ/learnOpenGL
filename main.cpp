@@ -13,6 +13,7 @@
 #include"LightDir.h"
 #include"LightPoint.h"
 #include"LightSpot.h"
+#include"Mesh.h"
 
 #pragma region Model Data
 float vertices[] = {
@@ -143,24 +144,27 @@ int main() {
 	);
 #pragma endregion
 	glEnable(GL_DEPTH_TEST);
+#pragma region Init Mesh
+	Mesh mesh(vertices);
+#pragma endregion
 	#pragma region Init and Load  Model To VAO,VBO
-	// VAO,上方位置：array buffer （下方位置：E buffer）
-	unsigned int VAO;
-	glGenVertexArrays(1,&VAO);
-	glBindVertexArray(VAO);
-	//VBO 绑定在VAO上方位置
-	unsigned int VBO;
-	glGenBuffers(1,&VBO);
-	glBindBuffer(GL_ARRAY_BUFFER,VBO);
-	//将自定义顶点数据拷贝到GL_ARRAY_BUFFER
-	glBufferData(GL_ARRAY_BUFFER,sizeof(vertices),vertices,GL_STATIC_DRAW);
-	// 3D
-	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-	glEnableVertexAttribArray(3);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(sizeof(float)*3));
-	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(sizeof(float) * 5));
-	glEnableVertexAttribArray(4);
+	//// VAO,上方位置：array buffer （下方位置：E buffer）
+	//unsigned int VAO;
+	//glGenVertexArrays(1,&VAO);
+	//glBindVertexArray(VAO);
+	////VBO 绑定在VAO上方位置
+	//unsigned int VBO;
+	//glGenBuffers(1,&VBO);
+	//glBindBuffer(GL_ARRAY_BUFFER,VBO);
+	////将自定义顶点数据拷贝到GL_ARRAY_BUFFER
+	//glBufferData(GL_ARRAY_BUFFER,sizeof(vertices),vertices,GL_STATIC_DRAW);
+	//// 3D
+	//glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
+	//glEnableVertexAttribArray(3);
+	//glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(sizeof(float)*3));
+	//glEnableVertexAttribArray(2);
+	//glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(sizeof(float) * 5));
+	//glEnableVertexAttribArray(4);
 #pragma endregion
 	//导入图片前翻转Y轴
 	stbi_set_flip_vertically_on_load(true);
@@ -185,7 +189,7 @@ int main() {
 		
 		//set viewMatrice
 		viewMat = camera.GetViewMatrix();
-		for (int i = 0; i < 10; i++) {
+		for (int i = 0; i < 1; i++) {
 			//Set Model matrix
 			modelMat = glm::translate(glm::mat4(1.0f), cubePositions[i]);
 			// Set View and Projection Matrices here if you want.
@@ -227,10 +231,11 @@ int main() {
 			material->setUniform1i("material.specular_tex", Shader::Specular);
 			material->setUniform1f("material.shininess",material->shininess);
 			//绑定VAO,EBO之前绑定在此VAO上，可以不用再绑定:Set Model
-			glBindVertexArray(VAO);
+			//glBindVertexArray(VAO);
 			//Draw Call
 			//个人猜测:glDrawArrays在VAO和Shader之间起到作用，具体什么作用有多种猜测
-			glDrawArrays(GL_TRIANGLES, 0, 36);
+			//glDrawArrays(GL_TRIANGLES, 0, 36);
+			mesh.Draw(myShader,material);
 		}
 		glfwSwapBuffers(window);
 		glfwPollEvents();
