@@ -12,6 +12,7 @@ public:
 	unsigned int ID;//shader program ID
 	enum Slot
 	{
+		//д╛хойг0
 		Diffuse,
 		Specular
 	};

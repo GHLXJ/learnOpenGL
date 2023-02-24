@@ -14,6 +14,7 @@
 #include"LightPoint.h"
 #include"LightSpot.h"
 #include"Mesh.h"
+#include"Model.h"
 
 #pragma region Model Data
 float vertices[] = {
@@ -87,7 +88,13 @@ void processInput(GLFWwindow* window);
 void mouse_callback(GLFWwindow* window, double xPos, double yPos);
 #pragma endregion
 unsigned int LoadImageToGPU(const char* fileName, GLint internalFormat, GLenum format, int textureSlot);
-int main() {
+int main(int argc,char* argv[]) {
+	#pragma region input model directory
+	//现在先默认model文件夹在.exe兄弟目录，具体为main()参数的argv[0]
+	//std::string path;
+	//std::cout << "请输入model目录文件夹" << std::endl;
+	//std::cin >> path;
+#pragma endregion
 	#pragma region Open a Window
 	//glfw初始化
 	glfwInit();
@@ -103,6 +110,7 @@ int main() {
 	}
 	//设置当前线程的主要上下文
 	glfwMakeContextCurrent(window);
+	//设置鼠标模式
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwSetCursorPosCallback(window, mouse_callback);
 	//glew 初始化
@@ -114,7 +122,7 @@ int main() {
 	}
 	glViewport(0, 0, 800, 600);
 #pragma endregion
-#pragma region Init three kinds light
+	#pragma region Init three kinds light
 	//平行光
 	LightDir lightDir(glm::vec3(10.0f,10.0f,5.0f),
 		glm::vec3(glm::radians(45.0f), glm::radians(180.0f), 0),
@@ -144,8 +152,11 @@ int main() {
 	);
 #pragma endregion
 	glEnable(GL_DEPTH_TEST);
-#pragma region Init Mesh
-	Mesh mesh(vertices);
+	#pragma region Init Mesh
+	//Mesh mesh(vertices);
+	std::string path = argv[0];
+	Model model(path.substr(0,path.find_last_of('\\'))+"\\model\\nanosuit.obj");
+	//std::cout << path.substr(0, path.find_last_of('\\')) + "\\model\\nanosuit.obj";
 #pragma endregion
 	#pragma region Init and Load  Model To VAO,VBO
 	//// VAO,上方位置：array buffer （下方位置：E buffer）
@@ -235,7 +246,8 @@ int main() {
 			//Draw Call
 			//个人猜测:glDrawArrays在VAO和Shader之间起到作用，具体什么作用有多种猜测
 			//glDrawArrays(GL_TRIANGLES, 0, 36);
-			mesh.Draw(myShader,material);
+			//mesh.Draw(myShader,material);
+			model.Draw(myShader, material);
 		}
 		glfwSwapBuffers(window);
 		glfwPollEvents();

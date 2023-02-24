@@ -13,6 +13,7 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath) {
 	std::stringstream fragmentSStream;
 	vertexFile.open(vertexPath);
 	fragmentFile.open(fragmentPath);
+	//exceptions具体作用还不清楚
 	vertexFile.exceptions(std::ifstream::failbit|| std::ifstream::badbit);
 	fragmentFile.exceptions(std::ifstream::failbit || std::ifstream::badbit);
 	try
@@ -26,8 +27,6 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath) {
 		fragmentString = fragmentSStream.str();
 		vertexSource = vertexString.c_str();
 		fragmentSource = fragmentString.c_str();
-		//测试
-		/*std::cout << vertexSource << std::endl << fragmentSource << std::endl;*/
 		unsigned int vertex, fragment;
 		vertex = glCreateShader(GL_VERTEX_SHADER);
 		glShaderSource(vertex,1,&vertexSource,nullptr);
@@ -49,7 +48,7 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath) {
 	}
 	catch (const std::exception& ex)
 	{
-		std::cout << ex.what();
+		std::cout << ex.what() << std::endl;
 	}
 
 }
