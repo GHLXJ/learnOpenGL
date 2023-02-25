@@ -107,5 +107,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="fragmentBorderSource.frag" />
+    <None Include="vertexBorderSource.vert" />
   </ItemGroup>
 </Project>

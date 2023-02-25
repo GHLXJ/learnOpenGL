@@ -11,6 +11,9 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath) {
 	std::ifstream fragmentFile;
 	std::stringstream vertexSStream;
 	std::stringstream fragmentSStream;
+	//保存文件名
+	this->vertexPath = vertexPath;
+	this->fragmentPath = fragmentPath;
 	vertexFile.open(vertexPath);
 	fragmentFile.open(fragmentPath);
 	//exceptions具体作用还不清楚

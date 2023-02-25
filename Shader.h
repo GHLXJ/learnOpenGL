@@ -9,6 +9,8 @@ public:
 	std::string fragmentString;
 	const char* vertexSource;
 	const char* fragmentSource;
+	const char* vertexPath;
+	const char* fragmentPath;
 	unsigned int ID;//shader program ID
 	enum Slot
 	{

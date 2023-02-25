@@ -117,6 +117,22 @@ int main(int argc,char* argv[]) {
 		return 0;
 	}
 	glViewport(0, 0, 800, 600);
+	//开启深度测试
+	glEnable(GL_DEPTH_TEST);
+	//设置深度缓冲只读
+	//glDepthMask(GL_FALSE);
+	//设置深度测试比较符
+	//glDepthFunc(GL_ALWAYS);
+	glDepthFunc(GL_LESS);
+	//开启模板测试
+	glEnable(GL_STENCIL_TEST);
+	//设置模板测试
+	//开启写入缓冲
+	glStencilMask(0xff);
+	//设置比较条件
+	glStencilFunc(GL_ALWAYS,1,0xff);
+	//设置写入条件
+	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 #pragma endregion
 	#pragma region Init three kinds light
 	//平行光
@@ -138,6 +154,7 @@ int main(int argc,char* argv[]) {
 	#pragma region Init Shader Program
 	//Shader对象
 	Shader* myShader = new Shader("vertexSource.vert", "fragmentSource.frag");
+	Shader* myBorderShader = new Shader("vertexBorderSource.vert", "fragmentBorderSource.frag");
 #pragma endregion
 	#pragma region Init Material
 	//unsigned int _diffuse_tex, unsigned int _specular_tex被设置,绑在GL_TEXTURE0 + Shader::Diffuse
@@ -149,15 +166,6 @@ int main(int argc,char* argv[]) {
 		32.0f
 	);
 #pragma endregion
-	//开启深度测试
-	glEnable(GL_DEPTH_TEST);
-	//设置深度缓冲只读
-	//glDepthMask(GL_FALSE);
-	//设置深度测试比较符
-	//glDepthFunc(GL_ALWAYS);
-	glDepthFunc(GL_LESS);
-	//开启模板测试
-
 	#pragma region Init Model
 	//Mesh mesh(vertices);
 	std::string path = argv[0];
@@ -180,7 +188,7 @@ int main(int argc,char* argv[]) {
 		camera.ProcessKeyboardMovement();
 		//清屏并清除深度缓冲，渲染纯色
 		glClearColor(0,0.5f,0.5f,1.0f);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 		
 		//set viewMatrice
 		viewMat = camera.GetViewMatrix();
@@ -236,13 +244,13 @@ int main(int argc,char* argv[]) {
 
 
 		for (int i = 0; i < 1; i++) {
-			//环境光
-			glUniform3f(glGetUniformLocation(myShader->ID, "ambientColor"), 0.2f, 0.2f, 0.2f);
+			myShader->use();
 			//Set vertexShader -> Uniforms
-			glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "modelMat"), 1, GL_FALSE, glm::value_ptr(modelMat));
 			glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "viewMat"), 1, GL_FALSE, glm::value_ptr(viewMat));
 			glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "proMat"), 1, GL_FALSE, glm::value_ptr(proMat));
 			glUniform3f(glGetUniformLocation(myShader->ID, "eyes"), camera.Position.x, camera.Position.y, camera.Position.z);
+			//环境光
+			glUniform3f(glGetUniformLocation(myShader->ID, "ambientColor"), 0.2f, 0.2f, 0.2f);
 			//平行光
 			glUniform3f(glGetUniformLocation(myShader->ID,"lightDir.dirToLight"), lightDir.lightDirection.x, lightDir.lightDirection.y, lightDir.lightDirection.z);
 			glUniform3f(glGetUniformLocation(myShader->ID, "lightDir.color"), lightDir.color.x, lightDir.color.y, lightDir.color.z);
@@ -259,6 +267,20 @@ int main(int argc,char* argv[]) {
 			glUniform1f(glGetUniformLocation(myShader->ID, "lightSpot.cosPhyInner"), lightSpot.cosPhyInner);
 			glUniform1f(glGetUniformLocation(myShader->ID, "lightSpot.cosPhyOuter"), lightSpot.cosPhyOuter);
 			model.Draw(myShader, material);
+			glDisable(GL_DEPTH_TEST);
+			glStencilMask(0x00);
+			glStencilFunc(GL_NOTEQUAL, 1, 0xff);
+			//设置uniform时要先use Shader
+			myBorderShader->use();
+			//Set vertexShader -> Uniforms
+			glUniformMatrix4fv(glGetUniformLocation(myBorderShader->ID, "viewMat"), 1, GL_FALSE, glm::value_ptr(viewMat));
+			glUniformMatrix4fv(glGetUniformLocation(myBorderShader->ID, "proMat"), 1, GL_FALSE, glm::value_ptr(proMat));
+			glUniform3f(glGetUniformLocation(myBorderShader->ID, "eyes"), camera.Position.x, camera.Position.y, camera.Position.z);
+			//利用模板测试绘制边框
+			model.Draw(myBorderShader, material);
+			glStencilMask(0xff);
+			glStencilFunc(GL_ALWAYS, 1, 0xff);
+			glEnable(GL_DEPTH_TEST);
 		}
 		glfwSwapBuffers(window);
 		glfwPollEvents();
