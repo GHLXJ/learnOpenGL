@@ -1,5 +1,5 @@
 #include "Model.h"
-
+//#include "stb_image.h"
 Model::Model(std::string path)
 {
 	loadModel(path);
@@ -70,5 +70,84 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene)
 			tempIndices.push_back(mesh->mFaces[i].mIndices[j]);
 		}
 	}
-	return Mesh(tempVertices,tempIndices,{});
+	if (mesh->mMaterialIndex >= 0) {
+		aiMaterial* material= scene->mMaterials[mesh->mMaterialIndex];
+		std::vector<texture> diffTexs = loadMaterialTexture(material,aiTextureType_DIFFUSE,"texture_diffuse");
+		tempTextures.insert(tempTextures.end(),diffTexs.begin(), diffTexs.end());
+		std::vector<texture> specuTexs = loadMaterialTexture(material, aiTextureType_SPECULAR, "texture_specular");
+		tempTextures.insert(tempTextures.end(), specuTexs.begin(), specuTexs.end());
+	}
+
+	return Mesh(tempVertices,tempIndices, tempTextures);
+}
+
+std::vector<texture> Model::loadMaterialTexture(aiMaterial* material, aiTextureType type, std::string texClass)
+{
+	std::vector<texture> textures;
+	for (unsigned int i = 0; i < material->GetTextureCount(type); i++)
+	{
+		aiString str;
+		//使用GetTexture获取每个纹理的文件位置:只是每个纹理的文件的名称和文件格式 abc.xyz
+		material->GetTexture(type,i,&str);
+		//优化,加载纹理并不是一个开销不大的操作
+		bool skip = false;
+		for (unsigned int j = 0; j < texture_hasLoaded.size(); j++) {
+			if (std::strcmp(texture_hasLoaded[j].path.data(), str.C_Str())) {
+				textures.push_back(texture_hasLoaded[j]);
+				skip = true;
+				break;
+			}
+		}
+		if (!skip) {
+			texture temptexture;
+			temptexture.id = TextureFromFile(str.C_Str(), directory);
+			temptexture.type = texClass;
+			temptexture.path = str.C_Str();
+			textures.push_back(temptexture);
+		}
+	}
+	return std::vector<texture>();
+}
+
+unsigned int Model::TextureFromFile(const char* path, std::string directory, bool gamma )
+{
+	std::string filename = std::string(path);
+	filename = directory + '\\' + filename;
+
+	unsigned int textureID;
+	glGenTextures(1, &textureID);
+
+	int width, height, nrComponents;
+	unsigned char* data = stbi_load(filename.c_str(), &width, &height, &nrComponents, 0);
+	if (data)
+	{
+		//format默认值
+		GLenum format = GL_RGB;
+		if (nrComponents == 1)
+			format = GL_RED;
+		else if (nrComponents == 3)
+			format = GL_RGB;
+		else if (nrComponents == 4)
+			format = GL_RGBA;
+
+		//没有指定要绑定的texture_2d通道,这里只需要返回textureID
+		glBindTexture(GL_TEXTURE_2D, textureID);
+		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+
+		//纹理过滤
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		stbi_image_free(data);
+	}
+	else
+	{
+		std::cout << "Texture failed to load at path: " << path << std::endl;
+		stbi_image_free(data);
+	}
+
+	return textureID;
 }
