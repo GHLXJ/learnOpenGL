@@ -91,12 +91,6 @@ void mouse_callback(GLFWwindow* window, double xPos, double yPos);
 #pragma endregion
 unsigned int LoadImageToGPU(const char* fileName, GLint internalFormat, GLenum format, int textureSlot);
 int main(int argc,char* argv[]) {
-	#pragma region input model directory
-	//现在先默认model文件夹在.exe兄弟目录，具体为main()参数的argv[0]
-	//std::string path;
-	//std::cout << "请输入model目录文件夹" << std::endl;
-	//std::cin >> path;
-#pragma endregion
 	#pragma region Open a Window
 	//glfw初始化
 	glfwInit();
@@ -113,7 +107,7 @@ int main(int argc,char* argv[]) {
 	//设置当前线程的主要上下文
 	glfwMakeContextCurrent(window);
 	//设置鼠标模式
-	//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	glfwSetCursorPosCallback(window, mouse_callback);
 	//glew 初始化
 	glewExperimental = true;
@@ -155,37 +149,23 @@ int main(int argc,char* argv[]) {
 		32.0f
 	);
 #pragma endregion
+	//开启深度测试
 	glEnable(GL_DEPTH_TEST);
+	//设置深度缓冲只读
+	//glDepthMask(GL_FALSE);
+	//设置深度测试比较符
+	//glDepthFunc(GL_ALWAYS);
+	glDepthFunc(GL_LESS);
+	//开启模板测试
+
 	#pragma region Init Model
 	//Mesh mesh(vertices);
 	std::string path = argv[0];
 	Model model(path.substr(0,path.find_last_of('\\'))+"\\model\\nanosuit.obj");
 	//std::cout << path.substr(0, path.find_last_of('\\')) + "\\model\\nanosuit.obj";
 #pragma endregion
-	#pragma region Init and Load  Model To VAO,VBO
-	//// VAO,上方位置：array buffer （下方位置：E buffer）
-	//unsigned int VAO;
-	//glGenVertexArrays(1,&VAO);
-	//glBindVertexArray(VAO);
-	////VBO 绑定在VAO上方位置
-	//unsigned int VBO;
-	//glGenBuffers(1,&VBO);
-	//glBindBuffer(GL_ARRAY_BUFFER,VBO);
-	////将自定义顶点数据拷贝到GL_ARRAY_BUFFER
-	//glBufferData(GL_ARRAY_BUFFER,sizeof(vertices),vertices,GL_STATIC_DRAW);
-	//// 3D
-	//glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
-	//glEnableVertexAttribArray(3);
-	//glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(sizeof(float)*3));
-	//glEnableVertexAttribArray(2);
-	//glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(sizeof(float) * 5));
-	//glEnableVertexAttribArray(4);
-#pragma endregion
 	//导入图片前翻转Y轴
 	stbi_set_flip_vertically_on_load(true);
-	#pragma region Load Image to GPU
-
-#pragma endregion
 	#pragma region Prepare MVP matrices
 	//模型矩阵，观察矩阵，投影矩阵
 	glm::mat4 modelMat;

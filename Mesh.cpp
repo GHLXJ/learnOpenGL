@@ -43,7 +43,9 @@ void Mesh::Draw(Shader* shader, Material* material)
 	shader->use();
 	//set vertex and fragment Shader uniform
 	//Set Model matrix
-	glUniformMatrix4fv(glGetUniformLocation(shader->ID, "modelMat"), 1, GL_FALSE, glm::value_ptr(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f))));
+	glm::mat4 modelMat = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, 0.0f));
+	modelMat = glm::scale(modelMat,glm::vec3(0.1f,0.1f,0.1f));
+	glUniformMatrix4fv(glGetUniformLocation(shader->ID, "modelMat"), 1, GL_FALSE, glm::value_ptr(modelMat));
 	//set lightColor objColor
 	glUniform3f(glGetUniformLocation(shader->ID,"objColor"),1.0f,1.0f,1.0f);
 	//set material Uniform
