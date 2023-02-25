@@ -130,9 +130,9 @@ int main(int argc,char* argv[]) {
 	//开启写入缓冲
 	glStencilMask(0xff);
 	//设置比较条件
-	glStencilFunc(GL_ALWAYS,1,0xff);
+	glStencilFunc(GL_LESS,1,0xff);
 	//设置写入条件
-	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 #pragma endregion
 	#pragma region Init three kinds light
 	//平行光
@@ -266,6 +266,8 @@ int main(int argc,char* argv[]) {
 			glUniform3f(glGetUniformLocation(myShader->ID, "lightSpot.color"), lightSpot.color.x, lightSpot.color.y, lightSpot.color.z);
 			glUniform1f(glGetUniformLocation(myShader->ID, "lightSpot.cosPhyInner"), lightSpot.cosPhyInner);
 			glUniform1f(glGetUniformLocation(myShader->ID, "lightSpot.cosPhyOuter"), lightSpot.cosPhyOuter);
+			glStencilFunc(GL_ALWAYS,1,0xff);
+			glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 			model.Draw(myShader, material);
 			glDisable(GL_DEPTH_TEST);
 			glStencilMask(0x00);
@@ -279,7 +281,6 @@ int main(int argc,char* argv[]) {
 			//利用模板测试绘制边框
 			model.Draw(myBorderShader, material);
 			glStencilMask(0xff);
-			glStencilFunc(GL_ALWAYS, 1, 0xff);
 			glEnable(GL_DEPTH_TEST);
 		}
 		glfwSwapBuffers(window);
