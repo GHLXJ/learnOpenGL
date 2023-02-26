@@ -130,7 +130,7 @@ int main(int argc,char* argv[]) {
 	//开启写入缓冲
 	glStencilMask(0xff);
 	//设置比较条件
-	glStencilFunc(GL_LESS,1,0xff);
+	glStencilFunc(GL_GREATER,1,0xff);
 	//设置写入条件
 	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 #pragma endregion
@@ -172,8 +172,6 @@ int main(int argc,char* argv[]) {
 	Model model(path.substr(0,path.find_last_of('\\'))+"\\model\\nanosuit.obj");
 	//std::cout << path.substr(0, path.find_last_of('\\')) + "\\model\\nanosuit.obj";
 #pragma endregion
-	//导入图片前翻转Y轴
-	stbi_set_flip_vertically_on_load(true);
 	#pragma region Prepare MVP matrices
 	//模型矩阵，观察矩阵，投影矩阵
 	glm::mat4 modelMat;
@@ -181,6 +179,8 @@ int main(int argc,char* argv[]) {
 	glm::mat4 proMat;
 	proMat = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
 #pragma endregion
+	//导入图片前翻转Y轴
+	stbi_set_flip_vertically_on_load(true);
 	//循环体，判断窗口是否关闭
 	while (!glfwWindowShouldClose(window)) {
 		//延迟处理输入
@@ -266,22 +266,32 @@ int main(int argc,char* argv[]) {
 			glUniform3f(glGetUniformLocation(myShader->ID, "lightSpot.color"), lightSpot.color.x, lightSpot.color.y, lightSpot.color.z);
 			glUniform1f(glGetUniformLocation(myShader->ID, "lightSpot.cosPhyInner"), lightSpot.cosPhyInner);
 			glUniform1f(glGetUniformLocation(myShader->ID, "lightSpot.cosPhyOuter"), lightSpot.cosPhyOuter);
-			glStencilFunc(GL_ALWAYS,1,0xff);
-			glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+			//glStencilFunc(GL_ALWAYS,1,0xff);
+			//glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
 			model.Draw(myShader, material);
-			glDisable(GL_DEPTH_TEST);
-			glStencilMask(0x00);
-			glStencilFunc(GL_NOTEQUAL, 1, 0xff);
+			//glDisable(GL_DEPTH_TEST);
+			//glStencilMask(0x00);
+			//glStencilFunc(GL_NOTEQUAL, 1, 0xff);
 			//设置uniform时要先use Shader
 			myBorderShader->use();
 			//Set vertexShader -> Uniforms
 			glUniformMatrix4fv(glGetUniformLocation(myBorderShader->ID, "viewMat"), 1, GL_FALSE, glm::value_ptr(viewMat));
 			glUniformMatrix4fv(glGetUniformLocation(myBorderShader->ID, "proMat"), 1, GL_FALSE, glm::value_ptr(proMat));
 			glUniform3f(glGetUniformLocation(myBorderShader->ID, "eyes"), camera.Position.x, camera.Position.y, camera.Position.z);
-			//利用模板测试绘制边框
+			////利用模板测试绘制边框
+			//model.Draw(myBorderShader, material);
+			//glStencilMask(0xff);
+			//glEnable(GL_DEPTH_TEST);
+			//利用混合制作透明效果
+			//开启混合
+			glEnable(GL_BLEND);
+			// 填入源因子和目标因子
+			glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+			//分别设置RGB的源因子和目标因子和Alpha的源因子和目标因子
+			//glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
+			glBlendEquation(GL_FUNC_ADD);
 			model.Draw(myBorderShader, material);
-			glStencilMask(0xff);
-			glEnable(GL_DEPTH_TEST);
+			glDisable(GL_BLEND);
 		}
 		glfwSwapBuffers(window);
 		glfwPollEvents();
