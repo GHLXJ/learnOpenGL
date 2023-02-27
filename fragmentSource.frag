@@ -54,7 +54,6 @@ vec3 CalcPointLight(){
 	float diffuseIntensity = max(dot(normalize(lightPoint.position - fragPos),normalize(normal)),0);
 	vec3 diffuse = diffuseIntensity * lightPoint.color * texture(material.diffuse_tex,TexCoord).rgb;
 	//specular
-	//vec3 R = reflect(normalize(-lightDir.dirToLight),normal);
 	vec3 R = reflect(normalize(fragPos - lightPoint.position),normal);
 	float specularIntensity = pow(max(dot(R,normalize(eyes - fragPos)),0),material.shininess);
 	vec3 specular = specularIntensity * lightPoint.color * texture(material.specular_tex,TexCoord).rgb;
@@ -85,7 +84,6 @@ vec3 CalcSpotLight(){
 		spotRatio = 0.0f;
 	}
 	//diffuse
-	//float diffuseIntensity = max(dot(normalize(lightDir.dirToLight),normalize(normal)),0);
 	float diffuseIntensity = max(dot(normalize(lightSpot.position - fragPos),normalize(normal)),0);
 	vec3 diffuse = diffuseIntensity * lightSpot.color * texture(material.diffuse_tex,TexCoord).rgb;
 	//specular
@@ -95,8 +93,11 @@ vec3 CalcSpotLight(){
 	result = (diffuse + specular) * spotRatio;
 	return result;
 }
-
+const float offset = 1.0 / 300.0;
 
 void main() {
+	//应用光照
 	FragColor = vec4(CalcDirLight() + CalcSpotLight() + CalcSpotLight(),1.0f)+ vec4(1.0f,1.0f,1.0f,1.0f) * texture(material.diffuse_tex,TexCoord);
+	//只使用diffuse纹理
+	//FragColor = texture(material.diffuse_tex,TexCoord);
 }

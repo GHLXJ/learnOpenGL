@@ -87,6 +87,7 @@
   <ItemGroup>
     <Text Include="vertexSource.vert" />
     <Text Include="fragmentSource.frag" />
+    <Text Include="framebuffer_Post_processing.txt" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="myColor.png">

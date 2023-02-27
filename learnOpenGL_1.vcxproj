@@ -166,6 +166,7 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="fragmentSource.frag" />
+    <Text Include="framebuffer_Post_processing.txt" />
     <Text Include="vertexSource.vert" />
   </ItemGroup>
   <ItemGroup>

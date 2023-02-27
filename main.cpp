@@ -246,6 +246,7 @@ int main(int argc,char* argv[]) {
 		//set viewMatrice
 		viewMat = camera.GetViewMatrix();
 		for (int i = 0; i < 1; i++) {
+			#pragma region 设置不同光的uniform
 			myShader->use();
 			//Set vertexShader -> Uniforms
 			glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "viewMat"), 1, GL_FALSE, glm::value_ptr(viewMat));
@@ -268,6 +269,7 @@ int main(int argc,char* argv[]) {
 			glUniform3f(glGetUniformLocation(myShader->ID, "lightSpot.color"), lightSpot.color.x, lightSpot.color.y, lightSpot.color.z);
 			glUniform1f(glGetUniformLocation(myShader->ID, "lightSpot.cosPhyInner"), lightSpot.cosPhyInner);
 			glUniform1f(glGetUniformLocation(myShader->ID, "lightSpot.cosPhyOuter"), lightSpot.cosPhyOuter);
+#pragma endregion
 			glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 			glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
