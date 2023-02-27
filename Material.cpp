@@ -14,15 +14,18 @@ Material::Material(Shader* _shader, glm::vec3 _ambient, unsigned int _diffuse_te
 
 void Material::setUniform3f(const char* paramNameString, glm::vec3 param)
 {
+	//shader->use();
 	glUniform3f(glGetUniformLocation(shader->ID,paramNameString),param.x,param.y,param.z);
 }
 
 void Material::setUniform1f(const char* paramNameString, float param)
 {
+	//shader->use();
 	glUniform1f(glGetUniformLocation(shader->ID, paramNameString), param);
 }
 
 void Material::setUniform1i(const char* paraNameString, unsigned int param)
 {
+	//shader->use();
 	glUniform1i(glGetUniformLocation(shader->ID,paraNameString),param);
 }

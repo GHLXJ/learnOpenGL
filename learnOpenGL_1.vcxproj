@@ -177,8 +177,10 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="fragmentBorderSource.frag" />
+    <None Include="fragmentTestFramebuffer.frag" />
     <None Include="packages.config" />
     <None Include="vertexBorderSource.vert" />
+    <None Include="vertexTestFramebuffer.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

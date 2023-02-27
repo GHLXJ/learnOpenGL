@@ -103,4 +103,7 @@ void main() {
 	//depth z值当片段颜色显示
 	//FragColor = vec4(vec3(gl_FragCoord.z),1.0f);
 	//FragColor = vec4(1.0f,1.0f,0.2f,1.0f);
+	//FragColor = vec4(CalcDirLight() + CalcSpotLight() + CalcSpotLight(),1.0f);
+	//FragColor =  texture(material.diffuse_tex,TexCoord)+ texture(material.specular_tex,TexCoord);
+	//FragColor =  texture(material.diffuse_tex,TexCoord);
 }

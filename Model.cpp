@@ -7,6 +7,14 @@ Model::Model(std::string path)
 
 void Model::Draw(Shader* shader, Material* material)
 {
+	/*for (unsigned int i = 0; i < meshes.size(); i++)
+	{
+		for (size_t j = 0; j <meshes[i].textures.size() ; j++)
+		{
+			std::cout << meshes[i].textures[j].path << meshes[i].textures[j].type << meshes[i].textures[j].id << std::endl;
+		}
+		std::cout << std::endl;
+	}*/
 	for (unsigned int i = 0; i < meshes.size(); i++)
 	{
 		meshes[i].Draw(shader, material);
@@ -33,9 +41,11 @@ void Model::processNode(aiNode* node, const aiScene* scene)
 	{
 		aiMesh* currMesh = scene->mMeshes[node->mMeshes[i]];
 		meshes.push_back(processMesh(currMesh, scene));
+		//std::cout << i << std::endl;
 	}
 	for (unsigned int i = 0; i < node->mNumChildren; i++) {
 		processNode(node->mChildren[i], scene);
+		//std::cout << i << std::endl;
 	}
 }
 
@@ -71,6 +81,8 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene)
 		}
 	}
 	if (mesh->mMaterialIndex >= 0) {
+		//std::cout <<":" << mesh->mMaterialIndex << std::endl;
+		//获得material
 		aiMaterial* material= scene->mMaterials[mesh->mMaterialIndex];
 		std::vector<texture> diffTexs = loadMaterialTexture(material,aiTextureType_DIFFUSE,"texture_diffuse");
 		tempTextures.insert(tempTextures.end(),diffTexs.begin(), diffTexs.end());
@@ -84,16 +96,21 @@ Mesh Model::processMesh(aiMesh* mesh, const aiScene* scene)
 std::vector<texture> Model::loadMaterialTexture(aiMaterial* material, aiTextureType type, std::string texClass)
 {
 	std::vector<texture> textures;
+	//std::cout << material->GetTextureCount(type) << std::endl;
 	for (unsigned int i = 0; i < material->GetTextureCount(type); i++)
 	{
 		aiString str;
 		//使用GetTexture获取每个纹理的文件位置:只是每个纹理的文件的名称和文件格式 abc.xyz
 		material->GetTexture(type,i,&str);
+		//std::cout << str.C_Str() << std::endl;
 		//优化,加载纹理并不是一个开销不大的操作
 		bool skip = false;
 		for (unsigned int j = 0; j < texture_hasLoaded.size(); j++) {
-			if (std::strcmp(texture_hasLoaded[j].path.data(), str.C_Str())) {
+			if (std::strcmp(texture_hasLoaded[j].path.c_str(), std::string(str.C_Str()).c_str())==0) {
+				//std::cout << texture_hasLoaded[j].path.data() << ":" << str.C_Str()<<std::endl;
 				textures.push_back(texture_hasLoaded[j]);
+				//std::cout << texture_hasLoaded[j].id <<":"<< texture_hasLoaded[j].path.data() << std::endl;
+				//std::cout << "textures.push_back(texture_hasLoaded[j]);" << std::endl;
 				skip = true;
 				break;
 			}
@@ -103,10 +120,13 @@ std::vector<texture> Model::loadMaterialTexture(aiMaterial* material, aiTextureT
 			temptexture.id = TextureFromFile(str.C_Str(), directory);
 			temptexture.type = texClass.c_str();
 			temptexture.path = str.C_Str();
+			//std::cout << temptexture.id <<":"<< temptexture .path.data()<<std::endl;
 			textures.push_back(temptexture);
+			texture_hasLoaded.push_back(temptexture);
 		}
 	}
-	return std::vector<texture>();
+	//std::cout << material->GetTextureCount(type) << std::endl;
+	return textures;
 }
 
 unsigned int Model::TextureFromFile(const char* path, std::string directory, bool gamma )
@@ -129,7 +149,7 @@ unsigned int Model::TextureFromFile(const char* path, std::string directory, boo
 			format = GL_RGB;
 		else if (nrComponents == 4)
 			format = GL_RGBA;
-
+		//glActiveTexture(GL_TEXTURE0);
 		//没有指定要绑定的texture_2d通道,这里只需要返回textureID
 		glBindTexture(GL_TEXTURE_2D, textureID);
 		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
@@ -140,8 +160,10 @@ unsigned int Model::TextureFromFile(const char* path, std::string directory, boo
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
+		//绑定默认
+		glBindTexture(GL_TEXTURE_2D, 0);
 		stbi_image_free(data);
+		//glBindTexture(GL_TEXTURE_2D, 0);
 	}
 	else
 	{

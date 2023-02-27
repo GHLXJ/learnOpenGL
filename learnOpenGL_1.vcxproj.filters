@@ -109,5 +109,7 @@
     <None Include="packages.config" />
     <None Include="fragmentBorderSource.frag" />
     <None Include="vertexBorderSource.vert" />
+    <None Include="vertexTestFramebuffer.vert" />
+    <None Include="fragmentTestFramebuffer.frag" />
   </ItemGroup>
 </Project>

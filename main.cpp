@@ -62,7 +62,16 @@ float vertices[] = {
 		-0.5f,  0.5f,  0.5f, 0.0f, 0.0f, 0.0f,  1.0f,  0.0f,
 		-0.5f,  0.5f, -0.5f, 0.0f, 1.0f, 0.0f,  1.0f,  0.0f
 };
+float quadVertices[] = { // vertex attributes for a quad that fills the entire screen in Normalized Device Coordinates.
+	// positions   // texCoords
+	-1.0f,  1.0f,  0.0f, 1.0f,
+	-1.0f, -1.0f,  0.0f, 0.0f,
+	 1.0f, -1.0f,  1.0f, 0.0f,
 
+	-1.0f,  1.0f,  0.0f, 1.0f,
+	 1.0f, -1.0f,  1.0f, 0.0f,
+	 1.0f,  1.0f,  1.0f, 1.0f
+};
 glm::vec3 cubePositions[] = {
   glm::vec3(0.0f,  0.0f,  0.0f),
   glm::vec3(2.0f,  5.0f, -15.0f),
@@ -155,6 +164,7 @@ int main(int argc,char* argv[]) {
 	//Shader对象
 	Shader* myShader = new Shader("vertexSource.vert", "fragmentSource.frag");
 	Shader* myBorderShader = new Shader("vertexBorderSource.vert", "fragmentBorderSource.frag");
+	Shader* myTestFramebufferShader = new Shader("vertexTestFramebuffer.vert","fragmentTestFramebuffer.frag");
 #pragma endregion
 	#pragma region Init Material
 	//unsigned int _diffuse_tex, unsigned int _specular_tex被设置,绑在GL_TEXTURE0 + Shader::Diffuse
@@ -171,6 +181,17 @@ int main(int argc,char* argv[]) {
 	std::string path = argv[0];
 	Model model(path.substr(0,path.find_last_of('\\'))+"\\model\\nanosuit.obj");
 	//std::cout << path.substr(0, path.find_last_of('\\')) + "\\model\\nanosuit.obj";
+	unsigned int quadVAO, quadVBO;
+	glGenVertexArrays(1, &quadVAO);
+	glGenBuffers(1, &quadVBO);
+	glBindVertexArray(quadVAO);
+	glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+	glEnableVertexAttribArray(9);
+	glVertexAttribPointer(9, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(10);
+	glVertexAttribPointer(10, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2 * sizeof(float)));
+	glBindVertexArray(0);
 #pragma endregion
 	#pragma region Prepare MVP matrices
 	//模型矩阵，观察矩阵，投影矩阵
@@ -178,6 +199,41 @@ int main(int argc,char* argv[]) {
 	glm::mat4 viewMat;
 	glm::mat4 proMat;
 	proMat = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
+#pragma endregion
+	#pragma region Create My FrameBuffer
+	unsigned int fbo;
+	glGenFramebuffers(1, &fbo);
+	glBindFramebuffer(GL_FRAMEBUFFER,fbo);
+	//创建纹理附件
+	unsigned int fbo_texture;
+	glGenTextures(1,&fbo_texture);
+	//绑定到GL_TEXTURE2D
+	glBindTexture(GL_TEXTURE_2D, fbo_texture);
+	//为fbo_texture分配内存
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 800.0f, 600.0f, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+	//设置纹理过滤
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	//处理完fbo_texture，解绑
+	glBindTexture(GL_TEXTURE_2D, 0);
+	//将纹理附件与帧缓冲绑定
+	glFramebufferTexture2D(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0,GL_TEXTURE_2D,fbo_texture,0);
+
+	//创建渲染缓冲附件
+	unsigned int rbo;
+	glGenRenderbuffers(1, &rbo);
+	glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 800, 600);
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
+
+	//检查帧缓冲完整性
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+		std::cout << "ERROR::FRAMEBUFFER:: Framebuffer is not complete!" << std::endl;
+		return -1;
+	}
+	//解绑当前帧缓冲，绑定到默认帧缓冲
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 #pragma endregion
 	//导入图片前翻转Y轴
 	stbi_set_flip_vertically_on_load(true);
@@ -189,60 +245,8 @@ int main(int argc,char* argv[]) {
 		//清屏并清除深度缓冲，渲染纯色
 		glClearColor(0,0.5f,0.5f,1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-		
 		//set viewMatrice
 		viewMat = camera.GetViewMatrix();
-		//for (int i = 0; i < 1; i++) {
-		//	//Set Model matrix
-		//	modelMat = glm::translate(glm::mat4(1.0f), cubePositions[i]);
-		//	// Set View and Projection Matrices here if you want.
-		//	// 
-		//	
-		//	//Set Material -> Shader Program
-		//	myShader->use();
-		//	//再次指定GL_TEXTURE_2D内索引并绑定GL_TEXTURE_2D:Set Material -> Textures
-		//	glActiveTexture(GL_TEXTURE0 + Shader::Diffuse);
-		//	glBindTexture(GL_TEXTURE_2D, material->diffuse_tex);
-		//	glActiveTexture(GL_TEXTURE0 + Shader::Specular);
-		//	glBindTexture(GL_TEXTURE_2D, material->specular_tex);
-		//	//set lightColor objColor
-		//	glUniform3f(glGetUniformLocation(myShader->ID,"objColor"),1.0f,1.0f,1.0f);
-		//	//环境光
-		//	glUniform3f(glGetUniformLocation(myShader->ID, "ambientColor"), 0.2f, 0.2f, 0.2f);
-		//	//Set vertexShader -> Uniforms
-		//	glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "modelMat"), 1, GL_FALSE, glm::value_ptr(modelMat));
-		//	glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "viewMat"), 1, GL_FALSE, glm::value_ptr(viewMat));
-		//	glUniformMatrix4fv(glGetUniformLocation(myShader->ID, "proMat"), 1, GL_FALSE, glm::value_ptr(proMat));
-		//	glUniform3f(glGetUniformLocation(myShader->ID, "eyes"), camera.Position.x, camera.Position.y, camera.Position.z);
-		//	//平行光
-		//	glUniform3f(glGetUniformLocation(myShader->ID,"lightDir.dirToLight"), lightDir.lightDirection.x, lightDir.lightDirection.y, lightDir.lightDirection.z);
-		//	glUniform3f(glGetUniformLocation(myShader->ID, "lightDir.color"), lightDir.color.x, lightDir.color.y, lightDir.color.z);
-		//	//点光源
-		//	glUniform3f(glGetUniformLocation(myShader->ID, "lightPoint.position"), lightPoint.position.x, lightPoint.position.y, lightPoint.position.z);
-		//	glUniform3f(glGetUniformLocation(myShader->ID, "lightPoint.color"), lightPoint.color.x, lightPoint.color.y, lightPoint.color.z);
-		//	glUniform1f(glGetUniformLocation(myShader->ID, "lightPoint.constant"), lightPoint.constant);
-		//	glUniform1f(glGetUniformLocation(myShader->ID, "lightPoint.linear"), lightPoint.linear);
-		//	glUniform1f(glGetUniformLocation(myShader->ID, "lightPoint.quadratic"), lightPoint.quadratic);
-		//	//聚光灯
-		//	glUniform3f(glGetUniformLocation(myShader->ID, "lightSpot.position"), lightSpot.position.x, lightSpot.position.y, lightSpot.position.z);
-		//	glUniform3f(glGetUniformLocation(myShader->ID, "lightSpot.dirToLight"), lightSpot.lightDirection.x, lightSpot.lightDirection.y, lightSpot.lightDirection.z);
-		//	glUniform3f(glGetUniformLocation(myShader->ID, "lightSpot.color"), lightSpot.color.x, lightSpot.color.y, lightSpot.color.z);
-		//	glUniform1f(glGetUniformLocation(myShader->ID, "lightSpot.cosPhyInner"), lightSpot.cosPhyInner);
-		//	glUniform1f(glGetUniformLocation(myShader->ID, "lightSpot.cosPhyOuter"), lightSpot.cosPhyOuter);
-		//	//set material Uniform
-		//	//material->setUniform1i("material.diffuse_tex", Shader::Diffuse);
-		//	//material->setUniform1i("material.specular_tex", Shader::Specular);
-		//	material->setUniform1f("material.shininess",material->shininess);
-		//	//绑定VAO,EBO之前绑定在此VAO上，可以不用再绑定:Set Model
-		//	//glBindVertexArray(VAO);
-		//	//Draw Call
-		//	//个人猜测:glDrawArrays在VAO和Shader之间起到作用，具体什么作用有多种猜测
-		//	//glDrawArrays(GL_TRIANGLES, 0, 36);
-		//	//mesh.Draw(myShader,material);
-		//	model.Draw(myShader, material);
-		//}
-
-
 		for (int i = 0; i < 1; i++) {
 			myShader->use();
 			//Set vertexShader -> Uniforms
@@ -266,32 +270,28 @@ int main(int argc,char* argv[]) {
 			glUniform3f(glGetUniformLocation(myShader->ID, "lightSpot.color"), lightSpot.color.x, lightSpot.color.y, lightSpot.color.z);
 			glUniform1f(glGetUniformLocation(myShader->ID, "lightSpot.cosPhyInner"), lightSpot.cosPhyInner);
 			glUniform1f(glGetUniformLocation(myShader->ID, "lightSpot.cosPhyOuter"), lightSpot.cosPhyOuter);
-			//glStencilFunc(GL_ALWAYS,1,0xff);
-			//glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+			glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+			glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
+			glEnable(GL_DEPTH_TEST);
 			model.Draw(myShader, material);
-			//glDisable(GL_DEPTH_TEST);
-			//glStencilMask(0x00);
-			//glStencilFunc(GL_NOTEQUAL, 1, 0xff);
-			//设置uniform时要先use Shader
-			myBorderShader->use();
-			//Set vertexShader -> Uniforms
-			glUniformMatrix4fv(glGetUniformLocation(myBorderShader->ID, "viewMat"), 1, GL_FALSE, glm::value_ptr(viewMat));
-			glUniformMatrix4fv(glGetUniformLocation(myBorderShader->ID, "proMat"), 1, GL_FALSE, glm::value_ptr(proMat));
-			glUniform3f(glGetUniformLocation(myBorderShader->ID, "eyes"), camera.Position.x, camera.Position.y, camera.Position.z);
-			////利用模板测试绘制边框
-			//model.Draw(myBorderShader, material);
-			//glStencilMask(0xff);
-			//glEnable(GL_DEPTH_TEST);
-			//利用混合制作透明效果
-			//开启混合
-			glEnable(GL_BLEND);
-			// 填入源因子和目标因子
-			glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
-			//分别设置RGB的源因子和目标因子和Alpha的源因子和目标因子
-			//glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ZERO);
-			glBlendEquation(GL_FUNC_ADD);
-			model.Draw(myBorderShader, material);
-			glDisable(GL_BLEND);
+
+
+			//利用之前的帧缓冲内容来绘制屏幕
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			glClearColor(0, 0.5f, 0.5f, 1.0f);
+			glClear(GL_COLOR_BUFFER_BIT);
+			glDisable(GL_DEPTH_TEST);
+			myTestFramebufferShader->use();
+			glUniform1i(glGetUniformLocation(myTestFramebufferShader->ID, "screenTexture"), 0);
+			glBindVertexArray(quadVAO);
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, fbo_texture);	// use the color attachment texture as the texture of the quad plane
+			glDrawArrays(GL_TRIANGLES, 0, 6);
+			
+			glEnable(GL_DEPTH_TEST);
+			
+			
 		}
 		glfwSwapBuffers(window);
 		glfwPollEvents();
