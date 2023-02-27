@@ -25,27 +25,18 @@ Mesh::Mesh(std::vector<vertex> vertexs, std::vector<unsigned int> indices, std::
 
 void Mesh::Draw(Shader* shader, Material* material)
 {
-	//std::cout << textures.size() << std::endl;
 	for (unsigned int i = 0; i < textures.size(); i++)
 	{
-		//std::cout << textures[i].type << ":" << textures[i].path << std::endl;
 		//ÌùÍ¼
 		if (textures[i].type == "texture_diffuse") {
-			//std::cout << textures[i].type << ":"<<textures[i].path<< std::endl;
 			glActiveTexture(GL_TEXTURE0 + Shader::Diffuse);
 			glBindTexture(GL_TEXTURE_2D, textures[i].id);
-			//std::cout << textures[i].id << std::endl;
-			//material->setUniform1i("material.tex_diffuse", Shader::Diffuse);
 		}
 		else if (textures[i].type == "texture_specular") {
 			glActiveTexture(GL_TEXTURE0 + Shader::Specular);
 			glBindTexture(GL_TEXTURE_2D, textures[i].id);
-			//material->setUniform1i("material.tex_specular", Shader::Specular);
 		}
-		
-		//std::cout << textures[i].path<< textures[i].type << textures[i].id << std::endl;
 	}
-	//std::cout << textures.size() << std::endl;
 	shader->use();
 	//set vertex and fragment Shader uniform
 	//Set Model matrix

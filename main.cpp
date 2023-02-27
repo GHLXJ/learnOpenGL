@@ -177,10 +177,8 @@ int main(int argc,char* argv[]) {
 	);
 #pragma endregion
 	#pragma region Init Model
-	//Mesh mesh(vertices);
 	std::string path = argv[0];
 	Model model(path.substr(0,path.find_last_of('\\'))+"\\model\\nanosuit.obj");
-	//std::cout << path.substr(0, path.find_last_of('\\')) + "\\model\\nanosuit.obj";
 	unsigned int quadVAO, quadVBO;
 	glGenVertexArrays(1, &quadVAO);
 	glGenBuffers(1, &quadVBO);
@@ -276,7 +274,6 @@ int main(int argc,char* argv[]) {
 			glEnable(GL_DEPTH_TEST);
 			model.Draw(myShader, material);
 
-
 			//利用之前的帧缓冲内容来绘制屏幕
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			glClearColor(0, 0.5f, 0.5f, 1.0f);
@@ -287,16 +284,12 @@ int main(int argc,char* argv[]) {
 			glBindVertexArray(quadVAO);
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, fbo_texture);	// use the color attachment texture as the texture of the quad plane
-			glDrawArrays(GL_TRIANGLES, 0, 6);
-			
+			glDrawArrays(GL_TRIANGLES, 0, 6);			
 			glEnable(GL_DEPTH_TEST);
-			
-			
 		}
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
-
 
 	//正常退出
 	glfwTerminate();
